@@ -1,0 +1,13 @@
+.git
+.gitignore
+README.md
+node_modules
+.env
+.env.local
+__pycache__
+*.pyc
+db.sqlite3
+.DS_Store
+media/
+staticfiles/
+.pytest_cache
