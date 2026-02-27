@@ -11,9 +11,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # -------------------------------------------------------------------
 # Security
 # -------------------------------------------------------------------
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-your-secret-key-change-in-production')
+SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 # -------------------------------------------------------------------
 # Application definition
@@ -71,23 +71,16 @@ WSGI_APPLICATION = 'skillbridge.wsgi.application'
 # -------------------------------------------------------------------
 # Database
 # -------------------------------------------------------------------
-import dj_database_url
-
-# Use DATABASE_URL if available (Railway will set this), otherwise use defaults
-if 'DATABASE_URL' in os.environ:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600
-        )
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default='skillbridge_db'),
+        'USER': config('DB_USER', default='postgres'),
+        'PASSWORD': config('DB_PASSWORD', default='postgres'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 # -------------------------------------------------------------------
 # Auth
