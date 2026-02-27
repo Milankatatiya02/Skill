@@ -14,11 +14,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend code
 COPY backend/ .
 
+# Make entrypoint executable
+RUN chmod +x entrypoint.sh
+
 # Expose port
 EXPOSE 8000
 
-# Create .env file if it doesn't exist (for migrations)
-RUN touch .env || true
-
-# Start server
-CMD ["gunicorn", "skillbridge.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Run entrypoint
+ENTRYPOINT ["./entrypoint.sh"]
