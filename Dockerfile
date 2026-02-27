@@ -2,8 +2,9 @@ FROM python:3.11
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including bash
 RUN apt-get update && apt-get install -y \
+    bash \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
@@ -20,5 +21,5 @@ RUN chmod +x entrypoint.sh
 # Expose port
 EXPOSE 8000
 
-# Run entrypoint
-ENTRYPOINT ["./entrypoint.sh"]
+# Run entrypoint with bash
+CMD ["/bin/bash", "entrypoint.sh"]
