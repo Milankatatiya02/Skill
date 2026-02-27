@@ -1,9 +1,0 @@
-{
-  "builder": "dockerfile",
-  "buildPacks": [
-    {
-      "src": "/backend",
-      "use": "@railway/builders/python@v1"
-    }
-  ]
-}
