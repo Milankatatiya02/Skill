@@ -16,5 +16,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Expose port
 EXPOSE 8000
 
-# Start gunicorn directly
-CMD gunicorn skillbridge.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
+# Run gunicorn (exec form - no shell wrapper)
+CMD ["gunicorn", "skillbridge.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120"]
