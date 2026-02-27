@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11
 
 WORKDIR /app
 
@@ -18,4 +18,5 @@ COPY backend/ .
 EXPOSE 8000
 
 # Run migrations and start server
-CMD ["sh", "-c", "python manage.py migrate && gunicorn skillbridge.wsgi:application --bind 0.0.0.0:8000"]
+RUN python manage.py migrate || true
+CMD ["gunicorn", "skillbridge.wsgi:application", "--bind", "0.0.0.0:8000"]
