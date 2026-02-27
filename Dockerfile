@@ -17,6 +17,8 @@ COPY backend/ .
 # Expose port
 EXPOSE 8000
 
-# Run migrations and start server
-RUN python manage.py migrate || true
+# Create .env file if it doesn't exist (for migrations)
+RUN touch .env || true
+
+# Start server
 CMD ["gunicorn", "skillbridge.wsgi:application", "--bind", "0.0.0.0:8000"]

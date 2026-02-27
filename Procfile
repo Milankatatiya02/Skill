@@ -1,1 +1,0 @@
-web: cd backend && gunicorn skillbridge.wsgi:application
