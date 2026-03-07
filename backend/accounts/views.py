@@ -118,3 +118,64 @@ def leaderboard(request):
         })
 
     return Response(data)
+
+
+# ───────────────────── Admin Skill Management ─────────────────────
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def admin_add_skill(request):
+    """Add a new skill (admin only)."""
+    if request.user.role != 'admin':
+        return Response({'detail': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
+    name = request.data.get('name', '').strip()
+    if not name:
+        return Response({'detail': 'Skill name is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    if Skill.objects.filter(name__iexact=name).exists():
+        return Response({'detail': 'This skill already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+    skill = Skill.objects.create(name=name)
+    return Response(SkillSerializer(skill).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def admin_delete_skill(request, pk):
+    """Delete a skill (admin only)."""
+    if request.user.role != 'admin':
+        return Response({'detail': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
+    from django.shortcuts import get_object_or_404
+    skill = get_object_or_404(Skill, pk=pk)
+    skill.delete()
+    return Response({'detail': 'Skill deleted.'}, status=status.HTTP_204_NO_CONTENT)
+
+
+# ───────────────────── Password & Account ─────────────────────
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def change_password(request):
+    """Change the authenticated user's password."""
+    old_password = request.data.get('old_password', '')
+    new_password = request.data.get('new_password', '')
+    if not old_password or not new_password:
+        return Response({'detail': 'Both old_password and new_password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not request.user.check_password(old_password):
+        return Response({'detail': 'Current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(new_password) < 8:
+        return Response({'detail': 'New password must be at least 8 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+    request.user.set_password(new_password)
+    request.user.save()
+    return Response({'detail': 'Password changed successfully.'})
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def delete_account(request):
+    """Delete the authenticated user's account (requires password confirmation)."""
+    password = request.data.get('password', '')
+    if not request.user.check_password(password):
+        return Response({'detail': 'Password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+    request.user.is_active = False
+    request.user.save(update_fields=['is_active'])
+    return Response({'detail': 'Account deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+

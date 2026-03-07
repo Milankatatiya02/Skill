@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import {
     Box, Card, CardContent, Typography, Avatar, Stack, Button, TextField,
     Chip, CircularProgress, Divider, Grid,
+    Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import {
     EditRounded, SaveRounded, BoltRounded, EmojiEventsRounded,
     CalendarTodayRounded, WorkRounded, VerifiedRounded, CheckRounded,
+    LockRounded, DeleteForeverRounded, WarningAmberRounded,
 } from '@mui/icons-material';
 
 export default function EditProfile() {
-    const { user, refreshUser } = useAuth();
+    const { user, refreshUser, logout } = useAuth();
+    const navigate = useNavigate();
     const [name, setName] = useState(user?.name || '');
     const [bio, setBio] = useState(user?.bio || '');
     const [skills, setSkills] = useState([]);
@@ -20,6 +24,17 @@ export default function EditProfile() {
     const [stats, setStats] = useState(null);
     const [saving, setSaving] = useState(false);
     const [loadingSkills, setLoadingSkills] = useState(true);
+
+    // Password change state
+    const [oldPassword, setOldPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [changingPassword, setChangingPassword] = useState(false);
+
+    // Delete account state
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
         // Load available skills
@@ -66,6 +81,38 @@ export default function EditProfile() {
             toast.error('Failed to save changes.');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleChangePassword = async () => {
+        if (!oldPassword || !newPassword || !confirmPassword) return toast.error('All password fields are required.');
+        if (newPassword.length < 8) return toast.error('New password must be at least 8 characters.');
+        if (newPassword !== confirmPassword) return toast.error('Passwords do not match.');
+        setChangingPassword(true);
+        try {
+            await api.post('/auth/change-password/', { old_password: oldPassword, new_password: newPassword });
+            toast.success('Password changed successfully!');
+            setOldPassword(''); setNewPassword(''); setConfirmPassword('');
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Failed to change password.');
+        } finally {
+            setChangingPassword(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!deletePassword) return toast.error('Password is required.');
+        setDeleting(true);
+        try {
+            await api.delete('/auth/delete-account/', { data: { password: deletePassword } });
+            toast.success('Account deleted.');
+            setDeleteDialogOpen(false);
+            logout();
+            navigate('/login');
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Failed to delete account.');
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -189,6 +236,72 @@ export default function EditProfile() {
                         >
                             {saving ? 'Saving...' : 'Save Changes'}
                         </Button>
+
+                        <Divider sx={{ my: 1 }} />
+
+                        {/* ═══════════ Change Password ═══════════ */}
+                        <Card sx={{ borderRadius: 4 }}>
+                            <CardContent sx={{ p: 3 }}>
+                                <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+                                    <LockRounded sx={{ fontSize: 20, color: '#f59e0b' }} />
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Change Password</Typography>
+                                </Stack>
+                                <Stack spacing={2}>
+                                    <TextField
+                                        label="Current Password" type="password" size="small" fullWidth
+                                        value={oldPassword} onChange={(e) => setOldPassword(e.target.value)}
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                                    />
+                                    <TextField
+                                        label="New Password" type="password" size="small" fullWidth
+                                        value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                                        helperText="Minimum 8 characters"
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                                    />
+                                    <TextField
+                                        label="Confirm New Password" type="password" size="small" fullWidth
+                                        value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                                        error={confirmPassword !== '' && confirmPassword !== newPassword}
+                                        helperText={confirmPassword !== '' && confirmPassword !== newPassword ? 'Passwords do not match' : ''}
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                                    />
+                                    <Button
+                                        variant="outlined" color="warning"
+                                        startIcon={changingPassword ? <CircularProgress size={16} color="inherit" /> : <LockRounded />}
+                                        onClick={handleChangePassword}
+                                        disabled={changingPassword || !oldPassword || !newPassword || !confirmPassword}
+                                        sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, alignSelf: 'flex-start' }}
+                                    >
+                                        {changingPassword ? 'Changing...' : 'Change Password'}
+                                    </Button>
+                                </Stack>
+                            </CardContent>
+                        </Card>
+
+                        {/* ═══════════ Danger Zone ═══════════ */}
+                        <Card sx={{
+                            borderRadius: 4,
+                            border: '1px solid rgba(239,68,68,0.3)',
+                            bgcolor: 'rgba(239,68,68,0.02)',
+                        }}>
+                            <CardContent sx={{ p: 3 }}>
+                                <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+                                    <WarningAmberRounded sx={{ fontSize: 20, color: '#ef4444' }} />
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#ef4444' }}>Danger Zone</Typography>
+                                </Stack>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontSize: '0.82rem' }}>
+                                    Permanently delete your account and all associated data. This action cannot be undone.
+                                </Typography>
+                                <Button
+                                    variant="outlined" color="error"
+                                    startIcon={<DeleteForeverRounded />}
+                                    onClick={() => setDeleteDialogOpen(true)}
+                                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                                >
+                                    Delete Account
+                                </Button>
+                            </CardContent>
+                        </Card>
                     </Stack>
                 </Grid>
 
@@ -223,6 +336,49 @@ export default function EditProfile() {
                     </Card>
                 </Grid>
             </Grid>
+
+            {/* ═══════════ Delete Account Dialog ═══════════ */}
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={() => { setDeleteDialogOpen(false); setDeletePassword(''); }}
+                maxWidth="xs" fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 4, bgcolor: 'rgba(17, 24, 39, 0.97)',
+                        backdropFilter: 'blur(20px)', border: '1px solid rgba(239,68,68,0.2)',
+                    },
+                }}
+            >
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+                    <WarningAmberRounded sx={{ color: '#ef4444' }} /> Delete Account
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                        This will permanently deactivate your account. Enter your password to confirm.
+                    </Typography>
+                    <TextField
+                        label="Your Password" type="password" size="small" fullWidth autoFocus
+                        value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    />
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2.5 }}>
+                    <Button onClick={() => { setDeleteDialogOpen(false); setDeletePassword(''); }}
+                        sx={{ borderRadius: 2, textTransform: 'none' }}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="contained" color="error"
+                        startIcon={deleting ? <CircularProgress size={16} color="inherit" /> : <DeleteForeverRounded />}
+                        onClick={handleDeleteAccount}
+                        disabled={deleting || !deletePassword}
+                        sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                    >
+                        {deleting ? 'Deleting...' : 'Delete My Account'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }
+

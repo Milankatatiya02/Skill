@@ -24,9 +24,31 @@ class Submission(models.Model):
     feedback = models.TextField(blank=True, default='')
     submitted_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        'accounts.User', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='reviewed_submissions',
+    )
 
     class Meta:
         ordering = ['-submitted_at']
 
     def __str__(self):
         return f"{self.user.email} — {self.task.title} ({self.status})"
+
+
+class SkillScore(models.Model):
+    """Cached multi-dimensional skill score for a user."""
+
+    user = models.OneToOneField(
+        'accounts.User', on_delete=models.CASCADE, related_name='skill_score'
+    )
+    overall_score = models.PositiveSmallIntegerField(default=0)
+    quality_score = models.PositiveSmallIntegerField(default=0)
+    consistency_score = models.PositiveSmallIntegerField(default=0)
+    problem_solving_score = models.PositiveSmallIntegerField(default=0)
+    improvement_score = models.PositiveSmallIntegerField(default=0)
+    last_calculated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.email} — Score: {self.overall_score}"
+

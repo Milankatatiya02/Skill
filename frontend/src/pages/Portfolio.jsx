@@ -191,7 +191,7 @@ export default function Portfolio() {
             )}
 
             {/* ─── Verified Work Section ─── */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" spacing={1} mb={2}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <WorkRounded sx={{ fontSize: 18, color: 'primary.light' }} /> Verified Work
                 </Typography>

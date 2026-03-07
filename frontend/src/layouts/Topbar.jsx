@@ -11,6 +11,7 @@ import {
     SearchRounded, NotificationsRounded, BoltRounded, SettingsRounded,
     PersonRounded, LogoutRounded, CalendarTodayRounded,
     CheckCircleRounded, CancelRounded, TaskAltRounded, DoneAllRounded,
+    MenuRounded,
 } from '@mui/icons-material';
 import { WIDTH } from './Sidebar';
 
@@ -35,7 +36,7 @@ const NOTIF_ICONS = {
     new_task: { icon: TaskAltRounded, color: '#06b6d4' },
 };
 
-export default function Topbar() {
+export default function Topbar({ onToggleSidebar }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -44,6 +45,7 @@ export default function Topbar() {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loadingNotifs, setLoadingNotifs] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
 
     const pageTitle = PAGE_TITLES[location.pathname] || 'SkillBridge';
     const now = new Date();
@@ -92,29 +94,49 @@ export default function Topbar() {
         return `${Math.floor(diff / 86400)}d ago`;
     };
 
+    const handleSearch = () => {
+        const q = searchValue.trim();
+        if (q) {
+            navigate(`/tasks?q=${encodeURIComponent(q)}`);
+            setSearchValue('');
+        }
+    };
+
     return (
         <AppBar
             position="sticky"
             elevation={0}
             sx={{
-                width: `calc(100% - ${WIDTH}px)`,
-                ml: `${WIDTH}px`,
+                width: { md: `calc(100% - ${WIDTH}px)` },
+                ml: { md: `${WIDTH}px` },
                 bgcolor: 'rgba(11, 15, 26, 0.85)',
                 backdropFilter: 'blur(20px)',
                 borderBottom: '1px solid',
                 borderColor: 'divider',
+                zIndex: (theme) => theme.zIndex.appBar,
             }}
         >
             <Toolbar sx={{ justifyContent: 'space-between', minHeight: '70px !important', px: { xs: 2, md: 3 } }}>
                 {/* Left */}
-                <Box>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem', mb: -0.3 }}>
-                        {greeting}, <Box component="span" sx={{ color: 'primary.light', fontWeight: 600 }}>{user?.name?.split(' ')[0]}</Box>
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.15rem', letterSpacing: '-0.01em' }}>
-                        {pageTitle}
-                    </Typography>
-                </Box>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <IconButton
+                        color="inherit"
+                        aria-label="open drawer"
+                        edge="start"
+                        onClick={onToggleSidebar}
+                        sx={{ mr: 1, display: { md: 'none' } }}
+                    >
+                        <MenuRounded />
+                    </IconButton>
+                    <Box>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem', mb: -0.3 }}>
+                            {greeting}, <Box component="span" sx={{ color: 'primary.light', fontWeight: 600 }}>{user?.name?.split(' ')[0]}</Box>
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.15rem', letterSpacing: '-0.01em' }}>
+                            {pageTitle}
+                        </Typography>
+                    </Box>
+                </Stack>
 
                 {/* Center — Search */}
                 <Box sx={{
@@ -126,8 +148,14 @@ export default function Topbar() {
                     '&:hover': { borderColor: 'rgba(148,163,184,0.15)', bgcolor: 'rgba(148,163,184,0.06)' },
                 }}>
                     <SearchRounded sx={{ fontSize: 18, color: 'text.secondary', mr: 1 }} />
-                    <InputBase placeholder="Search anything..." sx={{ flex: 1, fontSize: '0.82rem', color: 'text.secondary', '& input::placeholder': { opacity: 0.7 } }} />
-                    <Chip label="⌘K" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: 'rgba(148,163,184,0.08)', color: 'text.secondary', borderRadius: 1.5 }} />
+                    <InputBase
+                        placeholder="Search tasks..."
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                        sx={{ flex: 1, fontSize: '0.82rem', color: 'text.primary', '& input::placeholder': { opacity: 0.7 } }}
+                    />
+                    <Chip label="↵" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700, bgcolor: 'rgba(148,163,184,0.08)', color: 'text.secondary', borderRadius: 1.5 }} />
                 </Box>
 
                 {/* Right */}

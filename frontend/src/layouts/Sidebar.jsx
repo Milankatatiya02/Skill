@@ -5,6 +5,7 @@ import api from '../services/api';
 import {
     Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText,
     Typography, Avatar, Divider, IconButton, Tooltip, Stack, Badge,
+    useMediaQuery, useTheme
 } from '@mui/material';
 import {
     DashboardRounded, AssignmentRounded, TaskAltRounded, CloudUploadRounded,
@@ -32,9 +33,11 @@ const adminLinks = [
     { to: '/notifications', icon: NotificationsRounded, label: 'Notifications', badge: true },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ mobileOpen, onClose }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const links = user?.role === 'admin' ? adminLinks : studentLinks;
     const [unreadCount, setUnreadCount] = useState(0);
 
@@ -48,17 +51,9 @@ export default function Sidebar() {
         return () => clearInterval(interval);
     }, [fetchUnread]);
 
-    return (
-        <Drawer
-            variant="permanent"
-            sx={{
-                width: WIDTH,
-                flexShrink: 0,
-                '& .MuiDrawer-paper': { width: WIDTH, boxSizing: 'border-box', py: 2 },
-            }}
-        >
-            {/* Logo */}
-            <Box sx={{ px: 3, pb: 2 }}>
+    const drawerContent = (
+        <>
+            <Box sx={{ px: 3, pb: 2, pt: isMobile ? 2 : 0 }}>
                 <Stack direction="row" alignItems="center" spacing={1.5}>
                     <Avatar
                         sx={{
@@ -73,7 +68,7 @@ export default function Sidebar() {
                             SkillBridge
                         </Typography>
                         <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem', letterSpacing: 1.5, textTransform: 'uppercase' }}>
-                            Skill-to-Income
+                            Showcase your skills
                         </Typography>
                     </Box>
                 </Stack>
@@ -81,7 +76,6 @@ export default function Sidebar() {
 
             <Divider sx={{ mx: 2, borderColor: 'divider' }} />
 
-            {/* Nav */}
             <Box sx={{ flex: 1, px: 1.5, pt: 2, overflow: 'auto' }}>
                 <Typography variant="subtitle2" sx={{ px: 1.5, pb: 1, fontSize: '0.65rem' }}>
                     Menu
@@ -92,6 +86,7 @@ export default function Sidebar() {
                             key={to}
                             component={NavLink}
                             to={to}
+                            onClick={() => isMobile && onClose()}
                             sx={{
                                 borderRadius: 2.5,
                                 mb: 0.3,
@@ -124,7 +119,6 @@ export default function Sidebar() {
                 </List>
             </Box>
 
-            {/* User card */}
             <Box sx={{ px: 2, pb: 1 }}>
                 <Box sx={{
                     p: 2, borderRadius: 3,
@@ -167,7 +161,38 @@ export default function Sidebar() {
                     </Tooltip>
                 </Box>
             </Box>
-        </Drawer>
+        </>
+    );
+
+    return (
+        <Box
+            component="nav"
+            sx={{ width: { md: WIDTH }, flexShrink: { md: 0 } }}
+        >
+            <Drawer
+                variant="temporary"
+                open={mobileOpen}
+                onClose={onClose}
+                ModalProps={{ keepMounted: true }}
+                sx={{
+                    display: { xs: 'block', md: 'none' },
+                    '& .MuiDrawer-paper': { width: WIDTH, boxSizing: 'border-box', py: 2 },
+                }}
+            >
+                {drawerContent}
+            </Drawer>
+
+            <Drawer
+                variant="permanent"
+                sx={{
+                    display: { xs: 'none', md: 'block' },
+                    '& .MuiDrawer-paper': { width: WIDTH, boxSizing: 'border-box', py: 2 },
+                }}
+                open
+            >
+                {drawerContent}
+            </Drawer>
+        </Box>
     );
 }
 

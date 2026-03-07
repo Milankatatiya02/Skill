@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
 
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import SkillSelection from './pages/SkillSelection';
@@ -21,6 +22,7 @@ import PublicPortfolio from './pages/PublicPortfolio';
 import Notifications from './pages/Notifications';
 import EditProfile from './pages/EditProfile';
 import Leaderboard from './pages/Leaderboard';
+import NotFound from './pages/NotFound';
 
 export default function App() {
   return (
@@ -41,6 +43,7 @@ export default function App() {
             }}
           />
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/portfolio/:userId" element={<PublicPortfolio />} />
@@ -57,7 +60,7 @@ export default function App() {
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
             </Route>
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

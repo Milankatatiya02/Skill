@@ -11,7 +11,7 @@ from .serializers import TaskSerializer, TaskCreateSerializer, TaskAssignmentSer
 @permission_classes([permissions.AllowAny])
 def task_list(request):
     """List all tasks, optionally filtered by skill."""
-    tasks = Task.objects.select_related('skill_required').all()
+    tasks = Task.objects.select_related('skill_required', 'created_by').all()
     skill = request.query_params.get('skill')
     if skill:
         tasks = tasks.filter(skill_required__id=skill)
@@ -22,7 +22,7 @@ def task_list(request):
 @permission_classes([permissions.AllowAny])
 def task_detail(request, pk):
     """Retrieve a single task."""
-    task = get_object_or_404(Task.objects.select_related('skill_required'), pk=pk)
+    task = get_object_or_404(Task.objects.select_related('skill_required', 'created_by'), pk=pk)
     data = TaskSerializer(task).data
     # Add assignment info for authenticated users
     if request.user.is_authenticated:
@@ -42,7 +42,7 @@ def task_create(request):
         )
     serializer = TaskCreateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    serializer.save()
+    serializer.save(created_by=request.user)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -66,3 +66,31 @@ def my_tasks(request):
         user=request.user
     ).select_related('task', 'task__skill_required')
     return Response(TaskAssignmentSerializer(assignments, many=True).data)
+
+
+@api_view(['PATCH'])
+def task_update(request, pk):
+    """Update a task (admin only)."""
+    if request.user.role != 'admin':
+        return Response(
+            {'detail': 'Admin access required.'},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    task = get_object_or_404(Task, pk=pk)
+    serializer = TaskCreateSerializer(task, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(TaskSerializer(task).data)
+
+
+@api_view(['DELETE'])
+def task_delete(request, pk):
+    """Delete a task (admin only)."""
+    if request.user.role != 'admin':
+        return Response(
+            {'detail': 'Admin access required.'},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    task = get_object_or_404(Task, pk=pk)
+    task.delete()
+    return Response({'detail': 'Task deleted.'}, status=status.HTTP_204_NO_CONTENT)

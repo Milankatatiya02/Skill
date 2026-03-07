@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import {
     Box, Card, CardActionArea, CardContent, Typography, Chip, Stack, Grid,
@@ -8,10 +8,11 @@ import {
 import { SearchRounded, FilterListRounded, BoltRounded } from '@mui/icons-material';
 
 export default function TaskList() {
+    const [searchParams] = useSearchParams();
     const [tasks, setTasks] = useState([]);
     const [skills, setSkills] = useState([]);
     const [filter, setFilter] = useState('');
-    const [search, setSearch] = useState('');
+    const [search, setSearch] = useState(searchParams.get('q') || '');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

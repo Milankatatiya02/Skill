@@ -17,6 +17,10 @@ class Task(models.Model):
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='easy')
     deadline = models.DateTimeField()
     reward_points = models.PositiveIntegerField(default=10)
+    created_by = models.ForeignKey(
+        'accounts.User', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='created_tasks',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
