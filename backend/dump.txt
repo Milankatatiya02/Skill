@@ -1,1 +1,0 @@
-[(3, 'pending', 'submissions/10th_certificate.jpeg'), (1, 'approved', 'submissions/10th_certificate.jpeg')]
